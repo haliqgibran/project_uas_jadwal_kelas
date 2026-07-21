@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Administrator - SIM Jadwal Ruang Kelas{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner -->
+<div class="hero-academic" style="border-top-color: var(--primary-burgundy);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+        <div>
+            <span class="badge-academic badge-warning" style="margin-bottom: 8px;">🔐 Portal Administrator Logged In</span>
+            <h1 class="hero-title">Dashboard Pengelolaan Sistem Informasi</h1>
+            <p class="hero-subtitle">Ringkasan statistik penggunaan ruang kelas dan aktivitas jadwal perkuliahan.</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{{ url_for('ruang_list') }}" class="btn-classic-navy btn-classic-gold">+ Kelola Ruang</a>
+            <a href="{{ url_for('jadwal_list') }}" class="btn-classic-burgundy">+ Kelola Jadwal</a>
+        </div>
+    </div>
+</div>
+
+<!-- Stat Cards Grid -->
+<div class="stat-grid">
+    <div class="stat-card gold-top">
+        <div class="stat-header">
+            <span class="stat-title">Total Ruang Kelas</span>
+            <span class="stat-icon">🏫</span>
+        </div>
+        <div class="stat-number">{{ total_ruang }}</div>
+        <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">Ruangan terdaftar di sistem</div>
+    </div>
+    
+    <div class="stat-card burgundy-top">
+        <div class="stat-header">
+            <span class="stat-title">Total Jadwal Aktif</span>
+            <span class="stat-icon">📅</span>
+        </div>
+        <div class="stat-number">{{ total_jadwal }}</div>
+        <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">Perkuliahan terdaftar</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-header">
+            <span class="stat-title">Dosen Pengampu</span>
+            <span class="stat-icon">👨‍🏫</span>
+        </div>
+        <div class="stat-number">{{ total_dosen }}</div>
+        <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">Dosen aktif mengajar</div>
+    </div>
+    
+    <div class="stat-card gold-top">
+        <div class="stat-header">
+            <span class="stat-title">Mata Kuliah</span>
+            <span class="stat-icon">📚</span>
+        </div>
+        <div class="stat-number">{{ total_matkul }}</div>
+        <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">Mata kuliah terjadwal</div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px; margin-bottom: 28px;">
+    <!-- Chart 1: Distribution per Day -->
+    <div class="classic-card">
+        <div class="card-header-classic">
+            <h3><span>📊</span> Distribusi Jam Perkuliahan Per Hari</h3>
+        </div>
+        <div class="card-body-classic">
+            <canvas id="chartHari" height="220"></canvas>
+        </div>
+    </div>
+    
+    <!-- Chart 2: Rooms per Building -->
+    <div class="classic-card">
+        <div class="card-header-classic">
+            <h3><span>🏛️</span> Distribusi Ruang Kelas Per Gedung</h3>
+        </div>
+        <div class="card-body-classic">
+            <canvas id="chartGedung" height="220"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Schedules Table -->
+<div class="classic-card">
+    <div class="card-header-classic">
+        <h2><span>📋</span> Jadwal Terakhir Ditambahkan</h2>
+        <a href="{{ url_for('jadwal_list') }}" class="btn-classic-outline" style="padding: 4px 12px; font-size: 12px;">Lihat Semua Jadwal &rarr;</a>
+    </div>
+    <div class="card-body-classic" style="padding: 0;">
+        {% if recent_jadwal %}
+            <div class="table-responsive">
+                <table class="table-classic">
+                    <thead>
+                        <tr>
+                            <th>Hari</th>
+                            <th>Jam</th>
+                            <th>Ruangan</th>
+                            <th>Mata Kuliah</th>
+                            <th>Dosen</th>
+                            <th>Kelas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for j in recent_jadwal %}
+                            <tr>
+                                <td><strong>{{ j.hari }}</strong></td>
+                                <td><span class="badge-academic badge-navy">🕒 {{ j.jam_mulai }} - {{ j.jam_selesai }}</span></td>
+                                <td><strong style="color: var(--primary-burgundy);">{{ j.kode_ruang }}</strong> ({{ j.nama_ruang }})</td>
+                                <td><strong>{{ j.mata_kuliah }}</strong></td>
+                                <td>{{ j.dosen }}</td>
+                                <td><span class="badge-academic badge-warning">{{ j.kelas }}</span></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="padding: 30px; text-align: center; color: var(--text-muted);">Belum ada jadwal yang dimasukkan.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Chart 1: Hari
+        const ctxHari = document.getElementById('chartHari').getContext('2d');
+        new Chart(ctxHari, {
+            type: 'bar',
+            data: {
+                labels: {{ chart_hari_labels | tojson }},
+                datasets: [{
+                    label: 'Jumlah Perkuliahan',
+                    data: {{ chart_hari_values | tojson }},
+                    backgroundColor: 'rgba(27, 42, 74, 0.85)',
+                    borderColor: '#1B2A4A',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                }
+            }
+        });
+
+        // Chart 2: Gedung
+        const ctxGedung = document.getElementById('chartGedung').getContext('2d');
+        new Chart(ctxGedung, {
+            type: 'doughnut',
+            data: {
+                labels: {{ chart_gedung_labels | tojson }},
+                datasets: [{
+                    data: {{ chart_gedung_values | tojson }},
+                    backgroundColor: [
+                        '#1B2A4A',
+                        '#5C1D24',
+                        '#C5A059',
+                        '#4A6B82',
+                        '#7A2831'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

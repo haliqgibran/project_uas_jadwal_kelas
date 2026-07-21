@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Kelola Ruang Kelas - SIM Jadwal Ruang Kelas{% endblock %}
+
+{% block content %}
+<div class="hero-academic" style="padding: 24px 32px; border-top-color: var(--accent-gold);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+        <div>
+            <span class="badge-academic badge-navy" style="margin-bottom: 6px;">🏫 Entitas Utama 1</span>
+            <h1 class="hero-title" style="font-size: 24px;">Manajemen Data Ruang Kelas</h1>
+            <p class="hero-subtitle">Tambah, ubah, dan kelola ruangan perkuliahan di lingkungan kampus.</p>
+        </div>
+        <button onclick="openModal('modalTambahRuang')" class="btn-classic-gold">
+            <span>➕ Tambah Ruang Baru</span>
+        </button>
+    </div>
+</div>
+
+<!-- Table Data Ruang -->
+<div class="classic-card">
+    <div class="card-header-classic">
+        <h2><span>🏛️</span> Daftar Ruang Kelas Terdaftar</h2>
+        <span class="badge-academic badge-navy">Total {{ ruang_data|length }} Ruangan</span>
+    </div>
+    <div class="card-body-classic" style="padding: 0;">
+        {% if ruang_data %}
+            <div class="table-responsive">
+                <table class="table-classic">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Kode Ruang</th>
+                            <th>Nama Ruang</th>
+                            <th>Gedung / Lokasi</th>
+                            <th>Kapasitas</th>
+                            <th>Fasilitas</th>
+                            <th>Status</th>
+                            <th style="text-align: center;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in ruang_data %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td><strong style="color: var(--primary-burgundy); font-size: 15px;">{{ r.kode_ruang }}</strong></td>
+                                <td><strong>{{ r.nama_ruang }}</strong></td>
+                                <td>📍 {{ r.gedung }}</td>
+                                <td>👥 {{ r.kapasitas }} Kursi</td>
+                                <td><span style="font-size: 13px; color: var(--text-muted);">{{ r.fasilitas or '-' }}</span></td>
+                                <td>
+                                    {% if r.status == 'Tersedia' %}
+                                        <span class="badge-academic badge-available">Tersedia</span>
+                                    {% elif r.status == 'Dalam Perbaikan' %}
+                                        <span class="badge-academic badge-warning">Perbaikan</span>
+                                    {% else %}
+                                        <span class="badge-academic badge-occupied">Nonaktif</span>
+                                    {% endif %}
+                                </td>
+                                <td style="text-align: center; white-space: nowrap;">
+                                    <button onclick="openModal('modalEditRuang{{ r.id }}')" class="btn-classic-outline" style="padding: 4px 10px; font-size: 12px; margin-right: 4px;">
+                                        ✏️ Edit
+                                    </button>
+                                    <form method="POST" action="{{ url_for('ruang_hapus', id=r.id) }}" style="display: inline;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus ruang {{ r.nama_ruang }}? Seluruh jadwal di ruang ini juga akan terhapus.');">
+                                        <button type="submit" class="btn-classic-burgundy" style="padding: 4px 10px; font-size: 12px;">
+                                            🗑️ Hapus
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+
+                            <!-- Modal Edit Ruang -->
+                            <div id="modalEditRuang{{ r.id }}" class="modal-classic-backdrop">
+                                <div class="modal-classic-content">
+                                    <div class="modal-header-classic">
+                                        <h3 style="font-size: 16px; color: var(--primary-navy);">✏️ Ubah Data Ruang Kelas</h3>
+                                        <button onclick="closeModal('modalEditRuang{{ r.id }}')" class="modal-close-btn">&times;</button>
+                                    </div>
+                                    <form method="POST" action="{{ url_for('ruang_edit', id=r.id) }}" style="padding: 20px;">
+                                        <div class="form-group">
+                                            <label class="form-label">Kode Ruang *</label>
+                                            <input type="text" name="kode_ruang" class="form-control-classic" value="{{ r.kode_ruang }}" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Nama Ruangan *</label>
+                                            <input type="text" name="nama_ruang" class="form-control-classic" value="{{ r.nama_ruang }}" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Gedung / Lokasi *</label>
+                                            <input type="text" name="gedung" class="form-control-classic" value="{{ r.gedung }}" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Kapasitas (Jumlah Kursi) *</label>
+                                            <input type="number" name="kapasitas" class="form-control-classic" value="{{ r.kapasitas }}" min="1" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Fasilitas Ruangan</label>
+                                            <textarea name="fasilitas" class="form-control-classic" rows="3">{{ r.fasilitas }}</textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Status Ruangan *</label>
+                                            <select name="status" class="form-control-classic">
+                                                <option value="Tersedia" {% if r.status == 'Tersedia' %}selected{% endif %}>Tersedia</option>
+                                                <option value="Dalam Perbaikan" {% if r.status == 'Dalam Perbaikan' %}selected{% endif %}>Dalam Perbaikan</option>
+                                                <option value="Nonaktif" {% if r.status == 'Nonaktif' %}selected{% endif %}>Nonaktif</option>
+                                            </select>
+                                        </div>
+                                        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                                            <button type="button" onclick="closeModal('modalEditRuang{{ r.id }}')" class="btn-classic-outline">Batal</button>
+                                            <button type="submit" class="btn-classic-gold">Simpan Perubahan</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="padding: 40px; text-align: center; color: var(--text-muted);">
+                Belum ada data ruang kelas terdaftar. Klik <strong>"+ Tambah Ruang Baru"</strong> untuk menambahkan.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal Tambah Ruang Baru -->
+<div id="modalTambahRuang" class="modal-classic-backdrop">
+    <div class="modal-classic-content">
+        <div class="modal-header-classic">
+            <h3 style="font-size: 16px; color: var(--primary-navy);">➕ Tambah Data Ruang Kelas Baru</h3>
+            <button onclick="closeModal('modalTambahRuang')" class="modal-close-btn">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('ruang_tambah') }}" style="padding: 20px;">
+            <div class="form-group">
+                <label class="form-label">Kode Ruang (Contoh: RK-101) *</label>
+                <input type="text" name="kode_ruang" class="form-control-classic" placeholder="RK-101 / LAB-KOM1" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Nama Ruangan *</label>
+                <input type="text" name="nama_ruang" class="form-control-classic" placeholder="Ruang Kuliah 101" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Gedung / Lokasi *</label>
+                <input type="text" name="gedung" class="form-control-classic" placeholder="Gedung A Utama Lt. 1" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Kapasitas (Jumlah Kursi) *</label>
+                <input type="number" name="kapasitas" class="form-control-classic" placeholder="40" min="1" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Fasilitas Ruangan</label>
+                <textarea name="fasilitas" class="form-control-classic" rows="3" placeholder="Proyektor, AC, Whiteboard, Wi-Fi..."></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Status Ruangan *</label>
+                <select name="status" class="form-control-classic">
+                    <option value="Tersedia">Tersedia</option>
+                    <option value="Dalam Perbaikan">Dalam Perbaikan</option>
+                    <option value="Nonaktif">Nonaktif</option>
+                </select>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button type="button" onclick="closeModal('modalTambahRuang')" class="btn-classic-outline">Batal</button>
+                <button type="submit" class="btn-classic-gold">Simpan Ruangan</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

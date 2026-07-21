@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Kelola Jadwal Perkuliahan - SIM Jadwal Ruang Kelas{% endblock %}
+
+{% block content %}
+<div class="hero-academic" style="padding: 24px 32px; border-top-color: var(--primary-burgundy);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+        <div>
+            <span class="badge-academic badge-warning" style="margin-bottom: 6px;">📅 Entitas Utama 2 (Relasional)</span>
+            <h1 class="hero-title" style="font-size: 24px;">Manajemen Jadwal Penggunaan Ruangan</h1>
+            <p class="hero-subtitle">Sistem otomatis mendeteksi &amp; mencegah adanya bentrok jadwal pada jam/ruangan yang sama.</p>
+        </div>
+        <button onclick="openModal('modalTambahJadwal')" class="btn-classic-burgundy">
+            <span>➕ Tambah Jadwal Baru</span>
+        </button>
+    </div>
+</div>
+
+<!-- Table Data Jadwal -->
+<div class="classic-card">
+    <div class="card-header-classic">
+        <h2><span>📋</span> Daftar Seluruh Jadwal Perkuliahan</h2>
+        <span class="badge-academic badge-navy">Total {{ jadwal_data|length }} Jadwal</span>
+    </div>
+    <div class="card-body-classic" style="padding: 0;">
+        {% if jadwal_data %}
+            <div class="table-responsive">
+                <table class="table-classic">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Hari</th>
+                            <th>Jam Waktu</th>
+                            <th>Ruang Kelas</th>
+                            <th>Mata Kuliah</th>
+                            <th>Dosen Pengampu</th>
+                            <th>Kelas</th>
+                            <th>Keterangan</th>
+                            <th style="text-align: center;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for j in jadwal_data %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td><strong style="color: var(--primary-navy);">{{ j.hari }}</strong></td>
+                                <td>
+                                    <span class="badge-academic badge-navy">
+                                        🕒 {{ j.jam_mulai }} - {{ j.jam_selesai }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <strong style="color: var(--primary-burgundy);">{{ j.kode_ruang }}</strong>
+                                    <div style="font-size: 12px; color: var(--text-muted);">{{ j.nama_ruang }} ({{ j.gedung }})</div>
+                                </td>
+                                <td><strong style="font-size: 15px;">{{ j.mata_kuliah }}</strong></td>
+                                <td>{{ j.dosen }}</td>
+                                <td><span class="badge-academic badge-warning">{{ j.kelas }}</span></td>
+                                <td><span style="font-size: 13px; color: var(--text-muted);">{{ j.keterangan or '-' }}</span></td>
+                                <td style="text-align: center; white-space: nowrap;">
+                                    <button onclick="openModal('modalEditJadwal{{ j.id }}')" class="btn-classic-outline" style="padding: 4px 10px; font-size: 12px; margin-right: 4px;">
+                                        ✏️ Edit
+                                    </button>
+                                    <form method="POST" action="{{ url_for('jadwal_hapus', id=j.id) }}" style="display: inline;" onsubmit="return confirm('Hapus jadwal perkuliahan {{ j.mata_kuliah }}?');">
+                                        <button type="submit" class="btn-classic-burgundy" style="padding: 4px 10px; font-size: 12px;">
+                                            🗑️ Hapus
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+
+                            <!-- Modal Edit Jadwal -->
+                            <div id="modalEditJadwal{{ j.id }}" class="modal-classic-backdrop">
+                                <div class="modal-classic-content">
+                                    <div class="modal-header-classic">
+                                        <h3 style="font-size: 16px; color: var(--primary-navy);">✏️ Ubah Jadwal Perkuliahan</h3>
+                                        <button onclick="closeModal('modalEditJadwal{{ j.id }}')" class="modal-close-btn">&times;</button>
+                                    </div>
+                                    <form method="POST" action="{{ url_for('jadwal_edit', id=j.id) }}" style="padding: 20px;">
+                                        <div class="form-group">
+                                            <label class="form-label">Ruang Kelas *</label>
+                                            <select name="ruang_id" class="form-control-classic" required>
+                                                {% for r in ruang_options %}
+                                                    <option value="{{ r.id }}" {% if r.id == j.ruang_id %}selected{% endif %}>
+                                                        {{ r.kode_ruang }} - {{ r.nama_ruang }} (Kapasitas: {{ r.kapasitas }})
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label class="form-label">Hari Perkuliahan *</label>
+                                            <select name="hari" class="form-control-classic" required>
+                                                {% for d in days %}
+                                                    <option value="{{ d }}" {% if d == j.hari %}selected{% endif %}>Hari {{ d }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                            <div class="form-group">
+                                                <label class="form-label">Jam Mulai *</label>
+                                                <input type="time" name="jam_mulai" class="form-control-classic" value="{{ j.jam_mulai }}" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Jam Selesai *</label>
+                                                <input type="time" name="jam_selesai" class="form-control-classic" value="{{ j.jam_selesai }}" required>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label class="form-label">Nama Mata Kuliah *</label>
+                                            <input type="text" name="mata_kuliah" class="form-control-classic" value="{{ j.mata_kuliah }}" required>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label class="form-label">Dosen Pengampu *</label>
+                                            <input type="text" name="dosen" class="form-control-classic" value="{{ j.dosen }}" required>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label class="form-label">Kelas / Program Studi *</label>
+                                            <input type="text" name="kelas" class="form-control-classic" value="{{ j.kelas }}" required>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label class="form-label">Keterangan Tambahan</label>
+                                            <input type="text" name="keterangan" class="form-control-classic" value="{{ j.keterangan or '' }}">
+                                        </div>
+                                        
+                                        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                                            <button type="button" onclick="closeModal('modalEditJadwal{{ j.id }}')" class="btn-classic-outline">Batal</button>
+                                            <button type="submit" class="btn-classic-burgundy">Simpan Perubahan</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="padding: 40px; text-align: center; color: var(--text-muted);">
+                Belum ada jadwal perkuliahan terdaftar. Klik <strong>"+ Tambah Jadwal Baru"</strong> untuk memasukkan jadwal.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal Tambah Jadwal Baru -->
+<div id="modalTambahJadwal" class="modal-classic-backdrop">
+    <div class="modal-classic-content">
+        <div class="modal-header-classic">
+            <h3 style="font-size: 16px; color: var(--primary-navy);">➕ Tambah Jadwal Perkuliahan Baru</h3>
+            <button onclick="closeModal('modalTambahJadwal')" class="modal-close-btn">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('jadwal_tambah') }}" style="padding: 20px;">
+            <div class="form-group">
+                <label class="form-label">Pilih Ruang Kelas *</label>
+                <select name="ruang_id" class="form-control-classic" required>
+                    <option value="">-- Pilih Ruang Kelas --</option>
+                    {% for r in ruang_options %}
+                        <option value="{{ r.id }}">
+                            {{ r.kode_ruang }} - {{ r.nama_ruang }} ({{ r.gedung }}, Kapasitas: {{ r.kapasitas }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Hari Perkuliahan *</label>
+                <select name="hari" class="form-control-classic" required>
+                    <option value="">-- Pilih Hari --</option>
+                    {% for d in days %}
+                        <option value="{{ d }}">Hari {{ d }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                    <label class="form-label">Jam Mulai *</label>
+                    <input type="time" name="jam_mulai" class="form-control-classic" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Jam Selesai *</label>
+                    <input type="time" name="jam_selesai" class="form-control-classic" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Nama Mata Kuliah *</label>
+                <input type="text" name="mata_kuliah" class="form-control-classic" placeholder="Pengantar Pemrograman Python" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Dosen Pengampu *</label>
+                <input type="text" name="dosen" class="form-control-classic" placeholder="Dr. Ir. Hendra Wijaya, M.T." required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Kelas / Program Studi *</label>
+                <input type="text" name="kelas" class="form-control-classic" placeholder="TI-1A / SI-2B" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Keterangan Tambahan</label>
+                <input type="text" name="keterangan" class="form-control-classic" placeholder="Kuliah Teori / Praktikum Lab...">
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button type="button" onclick="closeModal('modalTambahJadwal')" class="btn-classic-outline">Batal</button>
+                <button type="submit" class="btn-classic-burgundy">Simpan Jadwal</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

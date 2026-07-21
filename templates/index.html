@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Jadwal Penggunaan Ruang Kelas - Publik{% endblock %}
+
+{% block content %}
+<!-- Hero Header Banner -->
+<div class="hero-academic">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+        <div>
+            <span class="badge-academic badge-navy" style="margin-bottom: 8px;">🏛️ Halaman Publik Informasi Ruang</span>
+            <h1 class="hero-title">Jadwal Perkuliahan &amp; Penggunaan Ruang Kelas</h1>
+            <p class="hero-subtitle">Pantau ketersediaan ruang kelas dan jadwal perkuliahan secara akurat dan teratur.</p>
+        </div>
+        <div style="background: var(--bg-cream-subtle); padding: 12px 20px; border-radius: 6px; border: 1px solid var(--border-classic); text-align: right;">
+            <div style="font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Hari Ini</div>
+            <div style="font-family: var(--font-heading); font-size: 20px; font-weight: 700; color: var(--primary-burgundy);">{{ today_id }}</div>
+            <div style="font-size: 13px; color: var(--primary-navy); font-weight: 600;">Waktu Server: {{ current_time_str }} WIB</div>
+        </div>
+    </div>
+</div>
+
+<!-- Search & Filter Panel -->
+<div class="classic-card">
+    <div class="card-header-classic">
+        <h3><span>🔍</span> Pencarian &amp; Filter Jadwal Perkuliahan</h3>
+        {% if f_hari or f_ruang or q_search %}
+            <a href="{{ url_for('index') }}" class="btn-classic-outline" style="padding: 4px 10px; font-size: 12px;">Reset Filter ✕</a>
+        {% endif %}
+    </div>
+    <div class="card-body-classic">
+        <form method="GET" action="{{ url_for('index') }}" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; align-items: end;">
+            <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Cari Kata Kunci</label>
+                <input type="text" name="search" class="form-control-classic" placeholder="Mata Kuliah / Dosen / Kelas..." value="{{ q_search }}">
+            </div>
+            
+            <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Filter Hari</label>
+                <select name="hari" class="form-control-classic">
+                    <option value="">-- Semua Hari --</option>
+                    {% for d in days %}
+                        <option value="{{ d }}" {% if f_hari == d %}selected{% endif %}>Hari {{ d }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Filter Ruangan</label>
+                <select name="ruang_id" class="form-control-classic">
+                    <option value="">-- Semua Ruangan --</option>
+                    {% for r in ruang_list %}
+                        <option value="{{ r.id }}" {% if f_ruang == (r.id|string) %}selected{% endif %}>
+                            {{ r.kode_ruang }} - {{ r.nama_ruang }} ({{ r.gedung }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                <button type="submit" class="btn-classic-gold" style="width: 100%; justify-content: center; height: 42px;">
+                    <span>🔎 Tampilkan Jadwal</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Real-time Status Card Grid for Today -->
+<div style="margin-bottom: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h2 style="font-size: 20px; font-weight: 700;">Status Ketersediaan Ruangan Saat Ini (Hari {{ today_id }})</h2>
+        <span style="font-size: 13px; color: var(--text-muted);">Status berubah otomatis mengikuti jam perkuliahan</span>
+    </div>
+    
+    <div class="rooms-grid">
+        {% for r in ruang_list %}
+            {% set status_info = active_rooms.get(r.id) %}
+            <div class="room-card {% if status_info.is_occupied %}occupied{% else %}free{% endif %}">
+                <div class="room-card-header">
+                    <div>
+                        <div class="room-code">{{ r.kode_ruang }}</div>
+                        <div class="room-name">{{ r.nama_ruang }}</div>
+                    </div>
+                    {% if status_info.is_occupied %}
+                        <span class="badge-academic badge-occupied">Sedang Terpakai</span>
+                    {% else %}
+                        <span class="badge-academic badge-available">Tersedia</span>
+                    {% endif %}
+                </div>
+                
+                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
+                    📍 {{ r.gedung }} | 👥 Kapasitas: {{ r.kapasitas }} Kursi
+                </div>
+                
+                {% if status_info.is_occupied and status_info.current_class %}
+                    <div style="background: var(--bg-cream-subtle); padding: 8px 10px; border-radius: 4px; font-size: 12px; border-left: 3px solid var(--primary-burgundy);">
+                        <div style="font-weight: 700; color: var(--primary-burgundy);">{{ status_info.current_class.mata_kuliah }}</div>
+                        <div style="color: var(--text-main);">👨‍🏫 {{ status_info.current_class.dosen }} ({{ status_info.current_class.kelas }})</div>
+                        <div style="color: var(--text-muted);">🕒 {{ status_info.current_class.jam_mulai }} - {{ status_info.current_class.jam_selesai }} WIB</div>
+                    </div>
+                {% else %}
+                    <div style="font-size: 12px; color: var(--status-available-text); font-style: italic;">
+                        Ruangan sedang tidak ada perkuliahan saat ini.
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Schedule List Table -->
+<div class="classic-card">
+    <div class="card-header-classic">
+        <h2><span>📅</span> Daftar Lengkap Jadwal Penggunaan Ruangan</h2>
+        <span class="badge-academic badge-navy">Total {{ jadwal_list|length }} Jadwal Ditemukan</span>
+    </div>
+    <div class="card-body-classic" style="padding: 0;">
+        {% if jadwal_list %}
+            <div class="table-responsive">
+                <table class="table-classic">
+                    <thead>
+                        <tr>
+                            <th>Hari</th>
+                            <th>Jam Waktu</th>
+                            <th>Ruangan</th>
+                            <th>Gedung</th>
+                            <th>Mata Kuliah</th>
+                            <th>Dosen Pengampu</th>
+                            <th>Kelas</th>
+                            <th>Keterangan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for j in jadwal_list %}
+                            <tr>
+                                <td>
+                                    <strong style="color: var(--primary-navy);">{{ j.hari }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge-academic badge-navy">
+                                        🕒 {{ j.jam_mulai }} - {{ j.jam_selesai }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <strong style="color: var(--primary-burgundy);">{{ j.kode_ruang }}</strong>
+                                    <div style="font-size: 12px; color: var(--text-muted);">{{ j.nama_ruang }}</div>
+                                </td>
+                                <td>{{ j.gedung }}</td>
+                                <td><strong style="font-size: 15px;">{{ j.mata_kuliah }}</strong></td>
+                                <td>{{ j.dosen }}</td>
+                                <td><span class="badge-academic badge-warning">{{ j.kelas }}</span></td>
+                                <td><span style="font-size: 13px; color: var(--text-muted);">{{ j.keterangan or '-' }}</span></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="padding: 40px; text-align: center; color: var(--text-muted);">
+                <div style="font-size: 48px; margin-bottom: 10px;">🔍</div>
+                <h3 style="font-size: 18px; margin-bottom: 6px;">Tidak ada data jadwal perkuliahan</h3>
+                <p style="font-size: 14px;">Silakan sesuaikan kata kunci pencarian atau kriteria filter Anda.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

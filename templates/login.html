@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Login Administrator - SIM Jadwal Ruang Kelas{% endblock %}
+
+{% block content %}
+<div style="max-width: 440px; margin: 40px auto;">
+    <div class="classic-card" style="border-top: 4px solid var(--primary-burgundy);">
+        <div class="card-header-classic" style="justify-content: center; flex-direction: column; text-align: center; gap: 8px; padding: 24px;">
+            <div class="brand-emblem" style="width: 56px; height: 56px; font-size: 24px; margin-bottom: 4px;">🏛️</div>
+            <h2 class="title-academic" style="font-size: 18px; color: var(--primary-navy);">Login Administrator</h2>
+            <p style="font-size: 13px; color: var(--text-muted);">Masuk ke portal pengelolaan jadwal &amp; ruang kelas</p>
+        </div>
+        
+        <div class="card-body-classic">
+            <form method="POST" action="{{ url_for('login') }}">
+                <div class="form-group">
+                    <label class="form-label" for="username">Username Admin</label>
+                    <input type="text" id="username" name="username" class="form-control-classic" placeholder="Masukkan username admin" required autofocus>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label" for="password">Kata Sandi (Password)</label>
+                    <input type="password" id="password" name="password" class="form-control-classic" placeholder="Masukkan kata sandi" required>
+                </div>
+                
+                <button type="submit" class="btn-classic-burgundy" style="width: 100%; justify-content: center; height: 44px; font-size: 15px;">
+                    <span>🔐 Masuk Ke Dashboard</span>
+                </button>
+            </form>
+            
+            <div style="margin-top: 24px; padding: 12px; background: var(--bg-cream-subtle); border-radius: 4px; border: 1px solid var(--border-classic); font-size: 12px; text-align: center; color: var(--text-muted);">
+                💡 <strong>Kredensial Default Evaluasi:</strong><br>
+                Username: <code style="color: var(--primary-burgundy); font-weight:700;">admin</code> | Password: <code style="color: var(--primary-burgundy); font-weight:700;">admin123</code>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

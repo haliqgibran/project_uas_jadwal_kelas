@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Laporan Rekapitulasi Penggunaan Ruangan - SIM Jadwal Ruang Kelas{% endblock %}
+
+{% block content %}
+<div class="hero-academic no-print" style="padding: 24px 32px; border-top-color: var(--accent-gold);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+        <div>
+            <span class="badge-academic badge-navy" style="margin-bottom: 6px;">📊 Laporan &amp; Statistik Sederhana</span>
+            <h1 class="hero-title" style="font-size: 24px;">Rekapitulasi Penggunaan Ruang Kelas</h1>
+            <p class="hero-subtitle">Rekap data agregat intensitas pemakaian ruangan per hari dan per gedung.</p>
+        </div>
+        <button onclick="window.print()" class="btn-classic-gold">
+            <span>🖨️ Cetak Laporan (Print)</span>
+        </button>
+    </div>
+</div>
+
+<!-- Filter Gedung Panel (No Print) -->
+<div class="classic-card no-print">
+    <div class="card-header-classic">
+        <h3><span>🔍</span> Filter Rekapitulasi</h3>
+    </div>
+    <div class="card-body-classic">
+        <form method="GET" action="{{ url_for('laporan') }}" style="display: flex; gap: 16px; align-items: flex-end;">
+            <div class="form-group" style="margin-bottom:0; flex:1;">
+                <label class="form-label">Pilih Gedung</label>
+                <select name="gedung" class="form-control-classic">
+                    <option value="">-- Semua Gedung --</option>
+                    {% for g in gedung_list %}
+                        <option value="{{ g }}" {% if f_gedung == g %}selected{% endif %}>{{ g }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn-classic-burgundy" style="height: 42px;">Tampilkan Rekap</button>
+            {% if f_gedung %}
+                <a href="{{ url_for('laporan') }}" class="btn-classic-outline" style="height: 42px; line-height: 24px;">Reset</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Printable Report View -->
+<div class="classic-card">
+    <div class="card-header-classic" style="text-align: center; flex-direction: column; gap: 4px; padding: 24px;">
+        <h2 class="title-academic" style="font-size: 20px; color: var(--primary-navy);">REKAPITULASI INTENSITAS PENGGUNAAN RUANG KELAS</h2>
+        <p style="font-size: 13px; color: var(--text-muted);">SISTEM INFORMASI MANAJEMEN RUANG KELAS AKADEMIK</p>
+    </div>
+    
+    <div class="card-body-classic" style="padding: 0;">
+        <div class="table-responsive">
+            <table class="table-classic">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">No</th>
+                        <th>Kode Ruang</th>
+                        <th>Nama Ruang</th>
+                        <th>Gedung</th>
+                        <th>Kapasitas</th>
+                        <th style="text-align: center;">Senin</th>
+                        <th style="text-align: center;">Selasa</th>
+                        <th style="text-align: center;">Rabu</th>
+                        <th style="text-align: center;">Kamis</th>
+                        <th style="text-align: center;">Jumat</th>
+                        <th style="text-align: center;">Sabtu</th>
+                        <th style="text-align: center;">Total Kelas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if rekap_ruang %}
+                        {% for r in rekap_ruang %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td><strong style="color: var(--primary-burgundy);">{{ r.kode_ruang }}</strong></td>
+                                <td>{{ r.nama_ruang }}</td>
+                                <td>{{ r.gedung }}</td>
+                                <td>{{ r.kapasitas }} Kursi</td>
+                                <td style="text-align: center;">{{ r.count_senin or 0 }}</td>
+                                <td style="text-align: center;">{{ r.count_selasa or 0 }}</td>
+                                <td style="text-align: center;">{{ r.count_rabu or 0 }}</td>
+                                <td style="text-align: center;">{{ r.count_kamis or 0 }}</td>
+                                <td style="text-align: center;">{{ r.count_jumat or 0 }}</td>
+                                <td style="text-align: center;">{{ r.count_sabtu or 0 }}</td>
+                                <td style="text-align: center;">
+                                    <span class="badge-academic badge-navy">{{ r.total_jadwal }} Sesi</span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="12" style="text-align: center; padding: 30px;">Tidak ada data rekapitulasi.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

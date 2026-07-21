@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistem Informasi Manajemen Jadwal Ruang Kelas{% endblock %}</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Main Style -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <!-- Header & Navigation -->
+    <header class="academic-header">
+        <div class="header-top-bar">
+            <div class="header-container" style="padding-top:2px; padding-bottom:2px;">
+                <span>🏛️ SISTEM INFORMASI AKADEMIK - TUGAS PROYEK UAS PENGANTAR PEMROGRAMAN</span>
+                <span>Python Flask &amp; SQLite</span>
+            </div>
+        </div>
+        <div class="header-container">
+            <a href="{{ url_for('index') }}" class="brand-wrapper">
+                <div class="brand-emblem">SIM</div>
+                <div class="brand-text">
+                    <h1>MANAJEMEN JADWAL RUANG KELAS</h1>
+                    <p>Sistem Manajemen Penggunaan Ruangan Kampus</p>
+                </div>
+            </a>
+            
+            <nav class="nav-classic">
+                <a href="{{ url_for('index') }}" class="nav-link-item {% if request.endpoint == 'index' %}active{% endif %}">
+                    <span>🏠 Beranda Jadwal</span>
+                </a>
+                
+                {% if session.get('user_id') %}
+                    <a href="{{ url_for('dashboard') }}" class="nav-link-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                        <span>📊 Dashboard Admin</span>
+                    </a>
+                    <a href="{{ url_for('ruang_list') }}" class="nav-link-item {% if request.endpoint == 'ruang_list' %}active{% endif %}">
+                        <span>🏫 Data Ruangan</span>
+                    </a>
+                    <a href="{{ url_for('jadwal_list') }}" class="nav-link-item {% if request.endpoint == 'jadwal_list' %}active{% endif %}">
+                        <span>📅 Data Jadwal</span>
+                    </a>
+                    <a href="{{ url_for('laporan') }}" class="nav-link-item {% if request.endpoint == 'laporan' %}active{% endif %}">
+                        <span>📋 Laporan Rekap</span>
+                    </a>
+                    <div style="margin-left: 12px; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 13px; color: var(--accent-gold-light);">👤 <strong>{{ session.get('username') }}</strong></span>
+                        <a href="{{ url_for('logout') }}" class="btn-classic-burgundy" style="padding: 5px 12px; font-size: 13px;">Logout 🚪</a>
+                    </div>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn-classic-gold" style="margin-left: 12px;">
+                        <span>🔐 Login Admin</span>
+                    </a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-wrapper">
+        <!-- Flash Notification Toasts -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-container">
+                    {% for category, message in messages %}
+                        <div class="alert-classic alert-{{ category }}">
+                            <span>
+                                {% if category == 'success' %}✅{% elif category == 'danger' %}🚨{% elif category == 'warning' %}⚠️{% else %}ℹ️{% endif %}
+                            </span>
+                            <div style="flex: 1;">{{ message }}</div>
+                            <button onclick="this.parentElement.remove()" style="background:none; border:none; cursor:pointer; font-size:16px;">✕</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="header-container" style="flex-direction: column; gap: 6px;">
+            <p class="title-academic" style="font-size: 14px; color: var(--accent-gold);">Sistem Informasi Manajemen Jadwal Penggunaan Ruang Kelas</p>
+            <p>Dikembangkan untuk Evaluasi Akhir (UAS Berbasis Project) Mata Kuliah Pengantar Pemrograman</p>
+            <p style="opacity: 0.7; font-size: 12px;">&copy; 2026 Academic Information Management System. Powered by Python Flask &amp; SQLite.</p>
+        </div>
+    </footer>
+
+    <!-- Script Utilities for Modals -->
+    <script>
+        function openModal(id) {
+            const el = document.getElementById(id);
+            if(el) el.classList.add('active');
+        }
+        function closeModal(id) {
+            const el = document.getElementById(id);
+            if(el) el.classList.remove('active');
+        }
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal-classic-backdrop')) {
+                event.target.classList.remove('active');
+            }
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
